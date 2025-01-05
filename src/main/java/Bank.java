@@ -7,16 +7,23 @@ import com.google.gson.Gson;
 public class Bank {
 
     private BankData bankData; // JSON’dan gelen veriler
+    private DatabaseProxy dbProxy; // eklendi
 
     // Bank, JSON path alarak veriyi yükleyebilir
     public Bank(String jsonFilePath) {
+        this.dbProxy = new DatabaseProxy();
         loadData(jsonFilePath);
     }
 
     // Parametresiz constructor (bazı durumlarda)
     public Bank() {
+        this.dbProxy = new DatabaseProxy();
         // Default JSON path
         loadData("bankdata.json");
+    }
+
+    public DatabaseProxy getDbProxy() {
+        return dbProxy;
     }
 
     /**

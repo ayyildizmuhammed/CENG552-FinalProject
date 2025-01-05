@@ -1,6 +1,4 @@
 
-import java.sql.Time;
-
 public class ATM {
 
     // FR1 için
@@ -11,7 +9,6 @@ public class ATM {
 
     // Demo amaçlı bileşenler
     private Log log;             
-    private DatabaseProxy db;    
     private NetworkToBank network; 
     private CashDispenser dispenser;
     private CardReader cardReader;
@@ -28,7 +25,6 @@ public class ATM {
         this.minimumCashRequired = n;
 
         this.log = new Log();
-        this.db = new DatabaseProxy();
         this.dispenser = new CashDispenser(log);
         this.display = new Display();
         this.session = new Session();
@@ -159,58 +155,62 @@ public class ATM {
         if (!session.isAuthorized()) {
             return new Message("NOT_AUTHORIZED", "Please log in first.");
         }
-
-        // FR12: transaction limit kontrolü
+    
+        // FR12: transaction limit (ATM side)
         if (amount > this.transactionLimit) {
-            return new Message("EXCEED_TRANSACTION_LIMIT", 
-                "Requested amount exceeds the transaction limit.");
+            return new Message("EXCEED_TRANSACTION_LIMIT", "Requested amount exceeds the transaction limit.");
         }
-
-        // Basit dailyLimit check (FR9 bank side, ama ATM local de bakabilir)
+    
+        // FR9 bank side => dailyLimit. 
+        // ATM’de kısaca local check de yapabiliriz:
         if (amount > this.dailyLimit) {
-            return new Message("EXCEED_DAILY_LIMIT", 
-                "Requested amount exceeds your daily limit.");
+            return new Message("EXCEED_DAILY_LIMIT", "Requested amount exceeds your daily limit.");
         }
-
-        // Performance Req 3: "The ATM dispenses money if and only if withdrawal is accepted by the bank"
-        // FR13: Banka onayı
-        Message request = new Message("WITHDRAW_REQUEST", 
-            "Attempting to withdraw " + amount);
-        Balances balances = new Balances(0, 0);
-        Status st = network.sendMessage(request, balances);
+    
+        // 1) FR7 => “WITHDRAW_REQUEST” -> Bank checks daily usage
+        Message request = new Message("WITHDRAW_REQUEST", "Attempting to withdraw " + amount);
+    
+        // Hack: "balances.availableBalance" = amount, "balances.totalBalance" = accountNum
+        // Bu, bank’ın sendMessage içinde parse edebilmesi için
+        Balances param = new Balances(amount, session.getAccountNumber());
         log.logSend(request);
-
+        Status st = network.sendMessage(request, param);
+    
         if (!st.isSuccess()) {
-            // FR16: transaction not successful => error msg, eject card
+            // Bank "transaction failed"
             displayErrorLong("Transaction not successful: " + st.getErrorCode());
             cardReader.ejectCard();
             this.cardInserted = false;
             return new Message("TRANSACTION_FAILED", st.getErrorCode());
         }
-
-        // FR14: Transaction success => money is dispensed
+    
+        // Bank => "transaction succeeded"
+        // FR14 => ATM dispenses money
         Money withdrawMoney = new Money(amount, "USD");
         if (!dispenser.checkCashOnHand(withdrawMoney)) {
-            // ATM kendi nakdine bakar
             cardReader.ejectCard();
             this.cardInserted = false;
             return new Message("ATM_NOT_ENOUGH_CASH", "ATM cannot dispense that amount.");
         }
-
         dispenser.dispenseCash(withdrawMoney);
-
-        // FR15: log the amount
         log.logCashDispensed(withdrawMoney);
-
-        // ATM fund update
+    
+        // FR8 => After money is dispensed, we must update the account in the bank
+        // 2) “MONEY_DISPENSED” -> “applyWithdrawal”
+        Message dispMsg = new Message("MONEY_DISPENSED", "ATM dispensed " + amount);
+        Balances dispParam = new Balances(amount, session.getAccountNumber());
+        Status dispStatus = network.sendMessage(dispMsg, dispParam);
+        log.logSend(dispMsg);
+    
+        // if dispStatus success => account updated
+        // ATM local fund update
         this.totalFund -= amount;
-
-        // FR14: “After the Customer has taken the card the money is dispensed.” 
-        // Basitçe: biz money dispense ettik -> kart iadesi
+    
+        // FR14 => "After the Customer has taken the card the money is dispensed."
         cardReader.ejectCard();
         this.cardInserted = false;
-
-        return new Message("TRANSACTION_SUCCESS", "Withdrawal done. Take your card and money.");
+    
+        return new Message("TRANSACTION_SUCCESS", "Withdrawal done. Card ejected.");
     }
 
     /**
