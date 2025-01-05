@@ -1,0 +1,17 @@
+{
+    "validBankCodes": [
+        1001
+    ],
+    "accounts": [
+        {
+            "accountNumber": 1234,
+            "password": 1111,
+            "status": "active"
+        },
+        {
+            "accountNumber": 9999,
+            "password": 2222,
+            "status": "active"
+        }
+    ]
+}
