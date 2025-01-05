@@ -17,6 +17,12 @@ public class DatabaseProxy {
 
         accountPinMap.put(9999, "2222");
         accountBalanceMap.put(9999, 2000.0);
+
+        accountPinMap.put(5555, "9999");
+        accountBalanceMap.put(5555, 1500.0);
+
+        accountPinMap.put(4321, "1234");
+        accountBalanceMap.put(4321, 500.0);
     }
 
     public String selectPasswordByAccountNum(int accountNum) {
@@ -69,5 +75,15 @@ public class DatabaseProxy {
      */
     public void applyWithdrawal(int accountNum, double amount) {
         minusBalance(accountNum, amount);
+    }
+
+    // Additional methods for testing
+
+    public void setDailyUsed(int accountNum, double usage) {
+        dailyUsedMap.put(accountNum, usage);
+    }
+
+    public void setBalance(int accountNum, double balance) {
+        accountBalanceMap.put(accountNum, balance);
     }
 }
