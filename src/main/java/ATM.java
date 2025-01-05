@@ -84,6 +84,7 @@ public class ATM {
         
         // FR5: read serial, FR6: log
         session.setCardNumber(serial);
+        session.setBankCode(bankCode);
         log.logSerialNumber(serial);
 
         // Zaman kaydı (Performance Requirements 2 - 2 dakika response vs.)
@@ -124,7 +125,7 @@ public class ATM {
                     // FR4 bank side => ATM "bad password"
                     // FR10: 3 kez yanlış => kart reten
                     session.incrementWrongAttempt();
-                    if (session.getWrongPasswordAttempts() >= 3) {
+                    if (session.getWrongPasswordAttempts() >= 4) {
                         cardReader.retainCard();
                         this.cardInserted = false;
                         return new Message("CARD_RETAINED", "Too many wrong attempts. Card is retained.");
@@ -260,8 +261,12 @@ public class ATM {
      * Burada sadece simüle ediyoruz.
      */
     private void displayErrorLong(String message) {
-        display.display("ERROR: " + message + " (show 30s) ");
-        // TODO: Actually wait 30s in real scenario
+        display.display("ERROR: " + message);
+        try {
+            Thread.sleep(30_000); // 30 sn bekleme
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public Log getLog() {
