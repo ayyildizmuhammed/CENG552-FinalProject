@@ -1,74 +1,88 @@
 package atmSrc;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.google.gson.Gson;
 
 public class DatabaseProxy {
 
-    // Mevcut map'ler
-    private static Map<Integer, String> accountPinMap = new HashMap<>();
-    private static Map<Integer, Double> accountBalanceMap = new HashMap<>();
+    private BankData bankData;
 
-    // Yeni: Günlük kullanım takibi
-    private static Map<Integer, Double> dailyUsedMap = new HashMap<>();
-
-    static {
-        // Örnek veriler
-        accountPinMap.put(1234, "1111");
-        accountBalanceMap.put(1234, 1000.0);
-
-        accountPinMap.put(9999, "2222");
-        accountBalanceMap.put(9999, 2000.0);
+    public DatabaseProxy(String jsonFilePath) {
+        loadData(jsonFilePath);
     }
 
-    public String selectPasswordByAccountNum(int accountNum) {
-        return accountPinMap.get(accountNum);
+    public BankData getBankData() {
+        return this.bankData;
+    }
+
+    public boolean isValidBankCode(int code) {
+        if (bankData == null || bankData.getValidBankCodes() == null)
+            return false;
+        return bankData.getValidBankCodes().contains(code);
+    }
+
+    public Account findAccount(int accountNumber) {
+        if (bankData == null || bankData.getAccounts() == null)
+            return null;
+        for (Account ba : bankData.getAccounts()) {
+            if (ba.getAccountNumber() == accountNumber) {
+                return ba;
+            }
+        }
+        return null;
     }
 
     public void minusBalance(int accountNum, double amount) {
-        if (!accountBalanceMap.containsKey(accountNum)) return;
-        double current = accountBalanceMap.get(accountNum);
-        accountBalanceMap.put(accountNum, current - amount);
+        Account account = bankData.getAccounts().stream().filter(a -> a.getAccountNumber() == accountNum)
+                .findFirst().get();
+        account.getBalance().setAvailableBalance(account.getBalance().getAvailableBalance() - amount);
     }
 
     public void plusBalance(int accountNum, double amount) {
-        if (!accountBalanceMap.containsKey(accountNum)) return;
-        double current = accountBalanceMap.get(accountNum);
-        accountBalanceMap.put(accountNum, current + amount);
+        Account account = bankData.getAccounts().stream().filter(a -> a.getAccountNumber() == accountNum)
+                .findFirst().get();
+        account.getBalance().setAvailableBalance(account.getBalance().getAvailableBalance() + amount);
     }
 
     public void checkTheBalance(int accountNum) {
-        Double bal = accountBalanceMap.get(accountNum);
-        if (bal == null) {
-            System.out.println("Balance: Account not found!");
-        } else {
-            System.out.println("Balance: " + bal);
-        }
+        Account account = bankData.getAccounts().stream().filter(a -> a.getAccountNumber() == accountNum)
+                .findFirst()
+                .get();
+        System.out.println("Available balance: " + account.getBalance().getAvailableBalance());
+        System.out.println("Total balance: " + account.getBalance().getTotalBalance());
+
     }
 
-    /**
-     * FR9: Her hesap için günlük limit k var.
-     * Bu metot, "amount" çekileceğinde daily limit aşılır mı diye bakar.
-     *  - eğer (günlükKullanım + amount) <= dailyLimit ise true döner ve dailyUsedMap'i günceller
-     *  - değilse false döner
-     */
-    public boolean checkAndUpdateDailyLimit(int accountNum, double amount, double dailyLimit) {
-        double usedSoFar = dailyUsedMap.getOrDefault(accountNum, 0.0);
-        double newUsed = usedSoFar + amount;
-        if (newUsed > dailyLimit) {
-            // limit aşıldı
-            return false;
-        } else {
-            // limit dahilinde
-            dailyUsedMap.put(accountNum, newUsed);
-            return true;
+    public boolean checkAndUpdateDailyLimit(int accountNum, double amount, double dailyAtmLimit) {
+
+        boolean result = false;
+        Account account = getBankData().getAccounts().stream().filter(a -> a.getAccountNumber() == accountNum)
+                .findFirst().get();
+        if (account.getDailyUsed() + amount <= dailyAtmLimit) {
+            account.setDailyUsed(account.getDailyUsed() + amount);
+            result = true;
         }
+        return result;
+
     }
 
-    /**
-     * FR8: Para gerçekten ATM'den çıktıktan sonra, "update account" (minusBalance)
-     * Bu, ATM'den "MONEY_DISPENSED" gibi bir mesaj aldığımızda çağrılabilir.
-     */
     public void applyWithdrawal(int accountNum, double amount) {
         minusBalance(accountNum, amount);
+    }
+
+    private void loadData(String jsonFilePath) {
+        try {
+            Path path = Paths.get(getClass().getClassLoader().getResource(jsonFilePath).toURI());
+            String jsonString = Files.readString(path);
+            Gson gson = new Gson();
+            this.bankData = gson.fromJson(jsonString, BankData.class);
+            System.out.println("[Bank] JSON data loaded from " + jsonFilePath);
+        } catch (Exception e) {
+            System.err.println("[Bank] Failed to load JSON data: " + e.getMessage());
+            this.bankData = new BankData(); // fallback
+        }
     }
 }

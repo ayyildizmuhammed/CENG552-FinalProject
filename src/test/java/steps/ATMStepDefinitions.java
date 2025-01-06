@@ -9,7 +9,7 @@ import atmSrc.Card;
 import atmSrc.Message;
 import io.cucumber.java.en.*;
 
-public class StepDefinitions {
+public class ATMStepDefinitions {
 
     private ATM atm;
     private Card card;
@@ -18,12 +18,13 @@ public class StepDefinitions {
     // Sadece demo amaçlı, normalde buradan bank oluşturabilirsiniz
     private Bank bank;
 
-    @Given("the ATM is initialized")
-    public void theATMIsInitialized() {
+    @Given("the ATM is initialized with totalFund: {int} dailyLimit: {int} transactionLimit: {int} minimumCashRequired: {int} bankData: {string}")
+    public void theATMIsInitialized(int totalFund, int dailyLimit, int transactionLimit, int minimumCashRequired,
+            String bankData) {
         // Bank veri dosyasını vermek isteyebilirsiniz -> bankdata.json
-        bank = new Bank("bankdata.json");
+        bank = new Bank(bankData);
         // FR1: t=10000, k=2000, m=500, n=500
-        atm = new ATM(10000, 2000, 500, 500, bank);
+        atm = new ATM(totalFund, dailyLimit, transactionLimit, minimumCashRequired, bank);
     }
 
     @Given("I insert a valid card")
@@ -33,10 +34,10 @@ public class StepDefinitions {
         lastMessage = atm.insertCard(card);
     }
 
-    @Given("I insert a second valid card {int}")
-    public void iInsertASecondValidCard(int cardNumber) {
+    @Given("I insert a second valid card number {int} with bank code {int}")
+    public void iInsertASecondValidCard(int cardNumber, int bankCode) {
         // Örnek: secondCard = new Card(99999, false, 1001)
-        card = new Card(cardNumber, false, 1001);
+        card = new Card(cardNumber, false, bankCode);
         lastMessage = atm.insertCard(card);
     }
 
@@ -59,6 +60,17 @@ public class StepDefinitions {
         lastMessage = atm.withdraw(amount);
     }
 
+    @Then("the ATM should store the initial parameters {int} {int} {int} {int} {string}")
+    public void theATMShouldStoreTheInitialParameters(int totalFund, int dailyLimt, int transactionLimit,
+            int minimumCashRequired, String bankData) {
+        // FR10: "CARD_RETAINED"
+        assertEquals(totalFund, atm.getTotalFund());
+        assertEquals(dailyLimt, atm.getDailyLimit());
+        assertEquals(transactionLimit, atm.getTransactionLimit());
+        assertEquals(minimumCashRequired, atm.getMinimumCashRequired());
+
+    }
+
     @Then("the ATM should retain the card")
     public void theATMShouldRetainTheCard() {
         // FR10: "CARD_RETAINED"
@@ -76,7 +88,8 @@ public class StepDefinitions {
         // Sizin senaryoya göre ayarlanabilir
         assertTrue("TRANSACTION_FAILED".equals(lastMessage.getCode())
                 || "EXCEED_DAILY_LIMIT".equals(lastMessage.getCode())
-                || "EXCEED_TRANSACTION_LIMIT".equals(lastMessage.getCode()));
+                || "EXCEED_TRANSACTION_LIMIT".equals(lastMessage.getCode())
+                || "BAD_ACCOUNT".equals(lastMessage.getCode()));
 
     }
 
@@ -88,6 +101,15 @@ public class StepDefinitions {
     @Then("the transfer should be successful")
     public void theTransferShouldBeSuccessful() {
         assertEquals("TRANSFER_SUCCESS", lastMessage.getCode());
+    }
+
+    @Given("Initial withdrawal sequence successful")
+    public void initialWithdrawalSequenceSuccessful() {
+        // Örnek: 1000 TL çekildi
+
+        lastMessage = atm.withdraw(1000);
+
+        assertEquals("WITHDRAW_SUCCESS", lastMessage.getCode());
     }
 
 }

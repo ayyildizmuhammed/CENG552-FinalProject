@@ -19,14 +19,14 @@ public class ATM {
     private boolean cardInserted = false;
     private long requestTimestamp;
 
-    public ATM(int t, int k, int m, int n, Bank bank) {
-        this.totalFund = t;
-        this.dailyLimit = k;
-        this.transactionLimit = m;
-        this.minimumCashRequired = n;
+    public ATM(int totalFund, int dailyLimit, int transactionLimit, int minimumCashRequired, Bank bank) {
+        this.totalFund = totalFund;
+        this.dailyLimit = dailyLimit;
+        this.transactionLimit = transactionLimit;
+        this.minimumCashRequired = minimumCashRequired;
 
         this.log = new Log();
-        this.dispenser = new CashDispenser(log);
+        this.dispenser = new CashDispenser(log, totalFund);
         this.display = new Display();
         this.session = new Session();
 
@@ -38,7 +38,7 @@ public class ATM {
             e.printStackTrace();
         }
 
-        this.cardReader = new CardReader(this);
+        this.cardReader = new CardReader();
 
         // FR2: ilk mesaj
         showInitialDisplay();
@@ -63,8 +63,7 @@ public class ATM {
         // FR3: Yeterli fon var mı?
         if (this.totalFund < this.minimumCashRequired) {
             // Kart hemen iade edilsin
-            return new Message("ATM_OUT_OF_CASH",
-                    "ATM does not have enough funds, returning your card.");
+            return new Message("ATM_OUT_OF_CASH", "ATM does not have enough funds, returning your card.");
         }
 
         // Kartı cihaz aldı
@@ -112,7 +111,7 @@ public class ATM {
         int bankCode = session.getBankCode();
 
         // NetworkToBank => Bank
-        Status st = network.sendAuthorizationRequest(bankCode, accountNum, String.valueOf(enteredPin));
+        Status st = this.network.sendAuthorizationRequest(bankCode, accountNum, String.valueOf(enteredPin));
         if (!st.isSuccess()) {
             // Gelen hata: "bad bank code", "bad password", "bad account"
             String err = st.getErrorCode();
@@ -150,10 +149,9 @@ public class ATM {
         }
     }
 
-    /**
-     * FR11–FR16: Withdraw akışı
-     */
     public Message withdraw(int amount) {
+        int accountNumber = this.session.getAccountNumber();
+        Account account = network.getAccount(accountNumber);
         if (!session.isAuthorized()) {
             return new Message("NOT_AUTHORIZED", "Please log in first.");
         }
@@ -166,18 +164,11 @@ public class ATM {
         // FR9 bank side => dailyLimit.
         // ATM’de kısaca local check de yapabiliriz:
         if (amount > this.dailyLimit) {
-            return new Message("EXCEED_DAILY_LIMIT", "Requested amount exceeds your daily limit.");
+            return new Message("EXCEED_DAILY_LIMIT", "Requested amount exceeds ATM daily limit.");
         }
-
-        // 1) FR7 => “WITHDRAW_REQUEST” -> Bank checks daily usage
         Message request = new Message("WITHDRAW_REQUEST", "Attempting to withdraw " + amount);
-
-        // Hack: "balances.availableBalance" = amount, "balances.totalBalance" =
-        // accountNum
-        // Bu, bank’ın sendMessage içinde parse edebilmesi için
-        Balances param = new Balances(amount, session.getAccountNumber());
         log.logSend(request);
-        Status st = network.sendMessage(request, param);
+        Status st = network.sendWithdrawalRequest(account, amount, this.dailyLimit);
 
         if (!st.isSuccess()) {
             // Bank "transaction failed"
@@ -201,8 +192,14 @@ public class ATM {
         // FR8 => After money is dispensed, we must update the account in the bank
         // 2) “MONEY_DISPENSED” -> “applyWithdrawal”
         Message dispMsg = new Message("MONEY_DISPENSED", "ATM dispensed " + amount);
-        Balances dispParam = new Balances(amount, session.getAccountNumber());
-        Status dispStatus = network.sendMessage(dispMsg, dispParam);
+        Status dispStatus = network.sendMoneyDispensedRequest(account, amount);
+        if (!dispStatus.isSuccess()) {
+            displayErrorLong("Account update failed: " + dispStatus.getErrorCode());
+            cardReader.ejectCard();
+            this.cardInserted = false;
+            return new Message("ACCOUNT_UPDATE_FAILED", dispStatus.getErrorCode());
+        }
+
         log.logSend(dispMsg);
 
         // if dispStatus success => account updated
@@ -223,12 +220,17 @@ public class ATM {
         if (!session.isAuthorized()) {
             return new Message("NOT_AUTHORIZED", "You must log in first.");
         }
+
+        int accountNumber = this.session.getAccountNumber();
+        Account fromAccount = network.getAccount(accountNumber);
+        Account toAccountObj = network.getAccount(toAccount);
+
         // Banka üzerinden transfer isteği
         Message request = new Message("TRANSFER_REQUEST",
                 "Transfer from: " + session.getAccountNumber() + " to " + toAccount
                         + " amount " + amount);
-        Balances balances = new Balances(0, 0);
-        Status st = network.sendMessage(request, balances);
+
+        Status st = network.sendTransferRequest(fromAccount, toAccountObj, amount);
         log.logSend(request);
 
         if (!st.isSuccess()) {
@@ -276,12 +278,19 @@ public class ATM {
         return log;
     }
 
-    /**
-     * FR2 Performance Requirement 2: "If no response from bank in 2 minutes =>
-     * reject card"
-     * Yukarıda `requestTimestamp` ile basit bir check yaptık.
-     * Gelişmiş senaryoda Thread veya Timer ile de yapılabilir.
-     */
+    public int getTotalFund() {
+        return totalFund;
+    }
 
-    // Diğer metotlar: readAccountNum, checkTime vs.
+    public int getDailyLimit() {
+        return dailyLimit;
+    }
+
+    public int getTransactionLimit() {
+        return transactionLimit;
+    }
+
+    public int getMinimumCashRequired() {
+        return minimumCashRequired;
+    }
 }

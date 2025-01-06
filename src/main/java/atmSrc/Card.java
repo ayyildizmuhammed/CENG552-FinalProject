@@ -1,9 +1,9 @@
 package atmSrc;
 
 public class Card {
-    private int number;       // Serial number
+    private int number;
     private boolean expired;
-    private int bankCode;     // Ekledik: FR7, FR8 'bad bank code' kontrolü için
+    private int bankCode;
 
     public Card(int number, boolean expired, int bankCode) {
         this.number = number;

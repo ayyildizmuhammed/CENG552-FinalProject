@@ -3,7 +3,7 @@ package atmSrc;
 public class Status {
 
     private boolean success;
-    private String errorCode;  // "bad password", "transaction failed", ...
+    private String errorCode; // "bad password", "transaction failed", ...
 
     public Status(boolean success, String errorCode) {
         this.success = success;

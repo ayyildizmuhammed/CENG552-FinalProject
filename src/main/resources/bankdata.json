@@ -6,12 +6,35 @@
         {
             "accountNumber": 1234,
             "password": 1111,
-            "status": "active"
+            "status": "active",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
         },
         {
             "accountNumber": 9999,
             "password": 2222,
-            "status": "active"
+            "status": "active",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        },
+        {
+            "accountNumber": 9999,
+            "password": 3333,
+            "status": "frozen",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
         }
     ]
 }

@@ -29,4 +29,8 @@ public class Log {
     public void logDeposit(Money amount, int accountNum) {
         System.out.println("LOG - Deposit " + amount + " to account " + accountNum);
     }
+
+    public void logTransfer(Money amount, int fromAccount, int toAccount) {
+        System.out.println("LOG - Transfer " + amount + " from account " + fromAccount + " to account " + toAccount);
+    }
 }

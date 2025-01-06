@@ -2,17 +2,19 @@ package atmSrc;
 
 public class CardReader {
 
-    private ATM atm;
     private Card currentCard;
 
-    public CardReader(ATM atm) {
-        this.atm = atm;
+    public CardReader() {
     }
 
     // FR4: Kart geçerli mi?
     public boolean checkCardValidity(Card card) {
-        if (card == null) return false;
-        if (card.isExpired()) return false;
+        if (card == null) {
+            return false;
+        }
+        if (card.isExpired()) {
+            return false;
+        }
         this.currentCard = card;
         return true;
     }

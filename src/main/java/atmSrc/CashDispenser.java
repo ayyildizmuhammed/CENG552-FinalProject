@@ -3,11 +3,11 @@ package atmSrc;
 public class CashDispenser {
 
     private Log log;
-    private Money cashOnHand;  // ATM içinde fiziksel nakit
+    private Money cashOnHand; // ATM içinde fiziksel nakit
 
-    public CashDispenser(Log log) {
+    public CashDispenser(Log log, int totalFund) {
         this.log = log;
-        this.cashOnHand = new Money(10000, "USD");
+        this.cashOnHand = new Money(totalFund, "USD");
     }
 
     public void setInitialCash(Money initialCash) {

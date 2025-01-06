@@ -1,11 +1,11 @@
 package atmSrc;
 
-public class Balances {
+public class Balance {
 
     private double availableBalance;
     private double totalBalance;
 
-    public Balances(double availableBalance, double totalBalance) {
+    public Balance(double availableBalance, double totalBalance) {
         this.availableBalance = availableBalance;
         this.totalBalance = totalBalance;
     }
