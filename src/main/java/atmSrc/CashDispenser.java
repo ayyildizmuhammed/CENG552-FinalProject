@@ -26,7 +26,7 @@ public class CashDispenser {
         log.logCashDispensed(amount);
     }
 
-    public void putCash() {
-        // deposit senaryolarında da buraya ekleme yapılabilir.
+    public void putCash(double amount) {
+        
     }
 }

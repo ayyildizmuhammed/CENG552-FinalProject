@@ -23,8 +23,11 @@ public class Bank {
         }
 
         if (!acc.getPassword().equals(password)) {
+            acc.incrementInvalidPasswordCount();
             return "bad password";
         }
+
+        acc.resetInvalidPasswordCount();
 
         // FR5: account sorunlu mu? (ör. status != "active" => “bad account”)
         if (!"active".equalsIgnoreCase(acc.getStatus())) {

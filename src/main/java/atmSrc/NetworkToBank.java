@@ -1,6 +1,8 @@
 package atmSrc;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NetworkToBank {
 
@@ -86,6 +88,42 @@ public class NetworkToBank {
         bank.getDbProxy().plusBalance(toAccount.getAccountNumber(), amount);
         closeConnection();
         return new Status(true, "transfer succeeded");
+    }
+
+    public Status sendDepositRequest(int accountNum, int amount) {
+        openConnection();
+        // Bank side => dbProxy.plusBalance(accountNum, amount), e.g.:
+        bank.getDbProxy().plusBalance(accountNum, amount);
+        closeConnection();
+        return new Status(true, "deposit succeeded");
+    }
+
+    public Status sendInquiryRequest(int accountNum, String inquiryType) {
+        openConnection();
+        Account acc = bank.getDbProxy().findAccount(accountNum);
+        if (acc == null) {
+            closeConnection();
+            return new Status(false, "account not found");
+        }
+
+        if ("BALANCE".equals(inquiryType)) {
+            double bal = acc.getBalance().getAvailableBalance();
+            closeConnection();
+            // "Status" üzerinde ek alan
+            //TODO: setBalance??
+            return new Status(true, "OK");
+        } else if ("DETAILED".equals(inquiryType)) {
+            List<String> last10 = new ArrayList<>();
+            last10.add("Withdrawal 300 USD");
+            last10.add("Deposit 200 USD");
+            // ...
+            closeConnection();
+            //TODO: setTransactionList??
+            return new Status(true, "OK");
+        } else {
+            closeConnection();
+            return new Status(false, "unknown inquiry type");
+        }
     }
 
 }

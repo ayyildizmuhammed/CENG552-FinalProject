@@ -188,6 +188,7 @@ public class ATM {
         }
         dispenser.dispenseCash(withdrawMoney);
         log.logCashDispensed(withdrawMoney);
+        printReceipt("withdraw", amount);
 
         // FR8 => After money is dispensed, we must update the account in the bank
         // 2) “MONEY_DISPENSED” -> “applyWithdrawal”
@@ -247,6 +248,70 @@ public class ATM {
                 "Transfer completed successfully.");
     }
 
+    public Message deposit(int amount) {
+        // 1) Check authorization
+        if (!session.isAuthorized()) {
+            return new Message("NOT_AUTHORIZED", "Please log in first.");
+        }
+
+        // 2) Simüle: “open deposit slot” – deposit physically
+        display.display("Please insert your cash...");
+
+        // 3) Bank’a deposit isteği
+        int accountNum = session.getAccountNumber();
+        Status st = network.sendDepositRequest(accountNum, amount);
+        if (!st.isSuccess()) {
+            // deposit failed
+            display.display("Deposit failed: " + st.getErrorCode());
+            return new Message("DEPOSIT_FAILED", st.getErrorCode());
+        }
+
+        // 4) ATM tarafında “putCash()” ile makineye fiziksel nakit ekleyebilirsiniz
+        dispenser.putCash(amount);
+        // Log deposit
+        log.logDeposit(new Money(amount, "USD"), accountNum);
+
+        // 5) Return success message
+        return new Message("DEPOSIT_SUCCESS", "Deposit completed. Amount: " + amount);
+    }
+
+    public Message inquiry(String inquiryType) {
+        // 1) Check authorization
+        if (!session.isAuthorized()) {
+            return new Message("NOT_AUTHORIZED", "Please log in first.");
+        }
+
+        int accountNum = session.getAccountNumber();
+        Account account = network.getAccount(accountNum);
+        if ("balance".equalsIgnoreCase(inquiryType)) {
+            // 2a) Bank'a "INQUIRY_BALANCE" isteği
+            Status st = network.sendInquiryRequest(accountNum, "BALANCE");
+            if (st.isSuccess()) {
+                // Devamında ATM ekranda gösterebilir
+                double bal = account.getBalance().getAvailableBalance();
+                display.display("Your available balance is: " + bal);
+                return new Message("INQUIRY_BALANCE_OK", "Balance: " + bal);
+            } else {
+                return new Message("INQUIRY_FAILED", st.getErrorCode());
+            }
+        }
+        // } else if ("detailed".equalsIgnoreCase(inquiryType)) {
+        // // 2b) Bank'a "INQUIRY_DETAILED" isteği
+        // Status st = network.sendInquiryRequest(accountNum, "DETAILED");
+        // if (st.isSuccess()) {
+        // // "st.getTransactionList()" vs. => son 10 işlem
+        // display.display("Recent transactions: " + st.getTransactionList());
+        // return new Message("INQUIRY_DETAILED_OK", "See last 10 transactions");
+        // } else {
+        // return new Message("INQUIRY_FAILED", st.getErrorCode());
+        // }
+
+        // }
+        else {
+            return new Message("INVALID_INQUIRY_TYPE", "Unknown inquiry type: " + inquiryType);
+        }
+    }
+
     /**
      * FR3: checkAvailabilityOfCashInATM
      */
@@ -271,6 +336,26 @@ public class ATM {
             Thread.sleep(30_000); // 30 sn bekleme
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void printReceipt(String transactionType, int amount) {
+        // Construct a Receipt object
+        Receipt receipt = new Receipt();
+        receipt.setTransactionType(transactionType);
+        receipt.setAmount(amount);
+        receipt.setCardSerial(session.getCardNumber()); // FR15: link to card serial
+
+        // If needed, set more fields: date/time, account number, etc.
+
+        // Now, pass it to ReceiptPrinter
+        // If we want a real receipt printer, we must handle the
+        // 'UnsupportedOperationException' inside:
+        try {
+            ReceiptPrinter printer = new ReceiptPrinter();
+            printer.printReceipt(receipt);
+        } catch (UnsupportedOperationException e) {
+            System.out.println("Receipt printer not implemented yet: " + e.getMessage());
         }
     }
 
