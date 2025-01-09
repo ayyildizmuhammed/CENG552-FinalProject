@@ -15,6 +15,17 @@ public class Display {
         return 1111; // Hard-coded ya da test simülasyonu
     }
 
+    public int showPinMenu() {
+        // Bu method, gerçekte ekranda 3 buton sunuyormuş gibi simüle edebilir:
+        System.out.println("[DISPLAY] Please enter your PIN or choose an option:");
+        System.out.println("1) Confirm");
+        System.out.println("2) Correction");
+        System.out.println("3) Take the card");
+        // Burada Scanner ile input alabilirsiniz. Şimdilik pseudo-code:
+        int choice = 1; // Hard-coded simülasyon: 1 -> Confirm
+        return choice;
+    }
+
     public int readMenuChoice(String prompt, String[] menu) {
         // ...
         return 0;

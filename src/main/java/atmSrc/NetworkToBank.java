@@ -6,29 +6,20 @@ import java.util.List;
 
 public class NetworkToBank {
 
-    private Log log;
     private InetAddress bankAddress;
     private Bank bank;
 
-    public NetworkToBank(Log log, InetAddress bankAddress, Bank bank) {
-        this.log = log;
+    public NetworkToBank(InetAddress bankAddress, Bank bank) {
         this.bankAddress = bankAddress;
         this.bank = bank;
     }
 
     public void openConnection() {
-        System.out.println("[NetworkToBank] Connection opened.");
+        System.out.println("[NetworkToBank] Connection opened Address: " + bankAddress);
     }
 
     public void closeConnection() {
-        System.out.println("[NetworkToBank] Connection closed.");
-    }
-
-    public Account getAccount(int accountNumber) {
-        openConnection();
-        Account account = bank.getDbProxy().findAccount(accountNumber);
-        closeConnection();
-        return account;
+        System.out.println("[NetworkToBank] Connection closed Address: " + bankAddress);
     }
 
     /**
@@ -53,7 +44,8 @@ public class NetworkToBank {
         }
     }
 
-    public Status sendWithdrawalRequest(Account account, double amount, int dailyLimit) {
+    public Status sendWithdrawalRequest(int accountNumber, double amount, int dailyLimit) {
+        Account account = bank.getDbProxy().findAccount(accountNumber);
         double availableBalance = account.getBalance().getAvailableBalance();
         if (availableBalance < amount) {
             return new Status(false, "insufficient funds");
@@ -71,15 +63,18 @@ public class NetworkToBank {
 
     }
 
-    public Status sendMoneyDispensedRequest(Account account, double amount) {
+    public Status sendMoneyDispensedRequest(int accountNumber, double amount) {
         openConnection();
+        Account account = bank.getDbProxy().findAccount(accountNumber);
         bank.getDbProxy().minusBalance(account.getAccountNumber(), amount);
         closeConnection();
         return new Status(true, "account updated");
     }
 
-    public Status sendTransferRequest(Account fromAccount, Account toAccount, double amount) {
+    public Status sendTransferRequest(int fromAccountNumber, int toAccountNumber, double amount) {
         openConnection();
+        Account fromAccount = bank.getDbProxy().findAccount(fromAccountNumber);
+        Account toAccount = bank.getDbProxy().findAccount(toAccountNumber);
         if (amount > fromAccount.getBalance().getAvailableBalance()) {
             closeConnection();
             return new Status(false, "transaction failed: insufficient funds");
@@ -98,31 +93,48 @@ public class NetworkToBank {
         return new Status(true, "deposit succeeded");
     }
 
-    public Status sendInquiryRequest(int accountNum, String inquiryType) {
+    // return status and List<String> for transaction list
+    public List<Object> sendInquiryRequest(int accountNum, String inquiryType) {
         openConnection();
+        List<Object> result = new ArrayList<>();
         Account acc = bank.getDbProxy().findAccount(accountNum);
         if (acc == null) {
             closeConnection();
-            return new Status(false, "account not found");
+            result.add(new Status(false, "account not found"));
+            return result;
         }
 
         if ("BALANCE".equals(inquiryType)) {
             double bal = acc.getBalance().getAvailableBalance();
             closeConnection();
             // "Status" üzerinde ek alan
-            //TODO: setBalance??
-            return new Status(true, "OK");
+            result.add(new Status(true, "OK"));
+            result.add(bal);
+            return result;
         } else if ("DETAILED".equals(inquiryType)) {
-            List<String> last10 = new ArrayList<>();
-            last10.add("Withdrawal 300 USD");
-            last10.add("Deposit 200 USD");
-            // ...
+            List<String> transactionList = acc.getTransactionHistory();
             closeConnection();
-            //TODO: setTransactionList??
-            return new Status(true, "OK");
+            // get latest 10 transactions
+            List<String> last10 = transactionList.subList(Math.max(transactionList.size() - 10, 0),
+                    transactionList.size());
+            result.add(new Status(true, "OK"));
+            result.add(last10);
+            return result;
         } else {
             closeConnection();
-            return new Status(false, "unknown inquiry type");
+            result.add(new Status(false, "unknown inquiry type"));
+            return result;
+        }
+    }
+
+    public Status sendChangePasswordRequest(int accountNumber, String newPin) {
+        openConnection();
+        boolean success = bank.getDbProxy().updatePassword(accountNumber, newPin);
+        closeConnection();
+        if (success) {
+            return new Status(true, "password updated");
+        } else {
+            return new Status(false, "cannot update password");
         }
     }
 

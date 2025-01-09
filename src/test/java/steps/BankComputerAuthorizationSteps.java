@@ -30,7 +30,7 @@ public class BankComputerAuthorizationSteps {
 
     @When("the bank verifies only the bank code")
     public void theBankVerifiesOnlyBankCode() {
-        boolean valid = bank.isValidBankCode(bankCode);
+        boolean valid = bank.getDbProxy().isValidBankCode(bankCode);
         if (valid) {
             bankCodeResult = "valid bank code";
         } else {

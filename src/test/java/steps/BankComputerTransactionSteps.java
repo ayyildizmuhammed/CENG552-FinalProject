@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 
 import atmSrc.Bank;
 import atmSrc.DatabaseProxy;
+import atmSrc.Account;
+import atmSrc.Balance;
 import io.cucumber.java.en.*;
 
 public class BankComputerTransactionSteps {
@@ -12,16 +14,12 @@ public class BankComputerTransactionSteps {
     private Bank bank;
     private DatabaseProxy dbProxy;
 
-    // FR7-FR9
-    private double usedSoFar;
     private double dailyLimit;
     private double withdrawAmount;
     private String transactionResult;
 
-    // FR8
     private double accountBalance;
-
-    // FR10
+    
     private boolean unauthorizedAccessDenied;
 
     @Given("the bank system is running with {string} for transaction")
@@ -35,7 +33,8 @@ public class BankComputerTransactionSteps {
     @Given("an account with number {int} has daily usage {double}")
     public void anAccountHasDailyUsage(int accNum, double usage) {
         // Set daily usage in DatabaseProxy
-        dbProxy.setDailyUsed(accNum, usage);
+        Account account = dbProxy.findAccount(accNum);
+        account.setDailyUsed(usage);
     }
 
     @And("daily limit is {double}")
@@ -70,7 +69,9 @@ public class BankComputerTransactionSteps {
     @Given("an account with number {int} has balance {double}")
     public void anAccountHasBalance(int accNum, double balance) {
         // Directly set balance in DatabaseProxy
-        dbProxy.setBalance(accNum, balance);
+        Balance balanceObj = new Balance(balance, balance);
+        Account account = dbProxy.findAccount(accNum);
+        account.setBalance(balanceObj);
         this.accountBalance = balance;
     }
 

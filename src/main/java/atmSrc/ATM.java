@@ -1,5 +1,8 @@
 package atmSrc;
 
+import java.net.InetAddress;
+import java.util.List;
+
 public class ATM {
 
     // FR1 için
@@ -30,17 +33,15 @@ public class ATM {
         this.display = new Display();
         this.session = new Session();
 
-        // Bank parametresi dışarıdan geliyor,
-        // NetworkToBank’e de veriyoruz:
         try {
-            this.network = new NetworkToBank(log, null, bank);
+            InetAddress bankAddress = InetAddress.getByName("localhost");
+            this.network = new NetworkToBank(bankAddress, bank);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         this.cardReader = new CardReader();
 
-        // FR2: ilk mesaj
         showInitialDisplay();
     }
 
@@ -51,6 +52,46 @@ public class ATM {
         if (!cardInserted) {
             display.display("Welcome to the Bank ATM! Insert your card...");
         }
+    }
+
+    public Message enterPinWithMenu(int pin, int accountNum) {
+        // Simüle: menüyü göster
+        int choice = display.showPinMenu();
+        if (choice == 2) {
+            display.display("You chose CORRECTION. Please re-enter your PIN.");
+            // Tekrar PIN almak vb.
+            return new Message("CORRECTION", "User wants to correct the PIN input.");
+        } else if (choice == 3) {
+            // Kartı iade et ve session sonlandır
+            cardReader.ejectCard();
+            this.cardInserted = false;
+            return new Message("TAKE_CARD", "Card ejected, transaction canceled.");
+        } else {
+            // Normal confirm flow => verify
+            return verify(pin, accountNum);
+        }
+    }
+
+    public Message changePassword(int oldPin, int newPin) {
+        if (!session.isAuthorized()) {
+            return new Message("NOT_AUTHORIZED", "Please log in first.");
+        }
+        // Adım 1: Eski PIN kontrolü
+        Status st = this.network.sendAuthorizationRequest(
+                session.getBankCode(),
+                session.getAccountNumber(),
+                String.valueOf(oldPin));
+        if (!st.isSuccess()) {
+            return new Message("BAD_OLD_PASSWORD", "Old password is incorrect.");
+        }
+        // Adım 2: Bankaya "change password" isteği
+        Status changeSt = network.sendChangePasswordRequest(
+                session.getAccountNumber(),
+                String.valueOf(newPin));
+        if (!changeSt.isSuccess()) {
+            return new Message("PASSWORD_CHANGE_FAILED", changeSt.getErrorCode());
+        }
+        return new Message("PASSWORD_CHANGED", "Your password has been changed successfully.");
     }
 
     /**
@@ -99,12 +140,11 @@ public class ATM {
             return new Message("NO_CARD", "No card inserted.");
         }
 
-        // 2 dk time-out (Performance Requirement 2)
         long now = System.currentTimeMillis();
-        if ((now - this.requestTimestamp) > 2 * 60 * 1000) {
+        if ((now - this.requestTimestamp) > 60 * 1000) {
             cardReader.ejectCard();
             this.cardInserted = false;
-            return new Message("TIMEOUT", "No response for 2 min, card ejected.");
+            return new Message("TIMEOUT", "No response for 60 seconds, card ejected.");
         }
 
         // Bank code from session
@@ -151,7 +191,6 @@ public class ATM {
 
     public Message withdraw(int amount) {
         int accountNumber = this.session.getAccountNumber();
-        Account account = network.getAccount(accountNumber);
         if (!session.isAuthorized()) {
             return new Message("NOT_AUTHORIZED", "Please log in first.");
         }
@@ -168,7 +207,7 @@ public class ATM {
         }
         Message request = new Message("WITHDRAW_REQUEST", "Attempting to withdraw " + amount);
         log.logSend(request);
-        Status st = network.sendWithdrawalRequest(account, amount, this.dailyLimit);
+        Status st = network.sendWithdrawalRequest(accountNumber, amount, this.dailyLimit);
 
         if (!st.isSuccess()) {
             // Bank "transaction failed"
@@ -193,7 +232,7 @@ public class ATM {
         // FR8 => After money is dispensed, we must update the account in the bank
         // 2) “MONEY_DISPENSED” -> “applyWithdrawal”
         Message dispMsg = new Message("MONEY_DISPENSED", "ATM dispensed " + amount);
-        Status dispStatus = network.sendMoneyDispensedRequest(account, amount);
+        Status dispStatus = network.sendMoneyDispensedRequest(accountNumber, amount);
         if (!dispStatus.isSuccess()) {
             displayErrorLong("Account update failed: " + dispStatus.getErrorCode());
             cardReader.ejectCard();
@@ -217,21 +256,18 @@ public class ATM {
     /**
      * FR17: Transfer
      */
-    public Message transfer(int toAccount, int amount) {
+    public Message transfer(int toAccountNumber, int amount) {
         if (!session.isAuthorized()) {
             return new Message("NOT_AUTHORIZED", "You must log in first.");
         }
 
-        int accountNumber = this.session.getAccountNumber();
-        Account fromAccount = network.getAccount(accountNumber);
-        Account toAccountObj = network.getAccount(toAccount);
-
+        int fromAccountNumber = this.session.getAccountNumber();
         // Banka üzerinden transfer isteği
         Message request = new Message("TRANSFER_REQUEST",
-                "Transfer from: " + session.getAccountNumber() + " to " + toAccount
+                "Transfer from: " + session.getAccountNumber() + " to " + toAccountNumber
                         + " amount " + amount);
 
-        Status st = network.sendTransferRequest(fromAccount, toAccountObj, amount);
+        Status st = network.sendTransferRequest(fromAccountNumber, toAccountNumber, amount);
         log.logSend(request);
 
         if (!st.isSuccess()) {
@@ -254,6 +290,7 @@ public class ATM {
             return new Message("NOT_AUTHORIZED", "Please log in first.");
         }
 
+        display.display("Cover is opened. Please insert your cash...");
         // 2) Simüle: “open deposit slot” – deposit physically
         display.display("Please insert your cash...");
 
@@ -282,32 +319,33 @@ public class ATM {
         }
 
         int accountNum = session.getAccountNumber();
-        Account account = network.getAccount(accountNum);
         if ("balance".equalsIgnoreCase(inquiryType)) {
             // 2a) Bank'a "INQUIRY_BALANCE" isteği
-            Status st = network.sendInquiryRequest(accountNum, "BALANCE");
+            List<Object> result = network.sendInquiryRequest(accountNum, "BALANCE");
+            Status st = (Status) result.get(0);
             if (st.isSuccess()) {
                 // Devamında ATM ekranda gösterebilir
-                double bal = account.getBalance().getAvailableBalance();
+                double bal = (double) result.get(1);
                 display.display("Your available balance is: " + bal);
                 return new Message("INQUIRY_BALANCE_OK", "Balance: " + bal);
             } else {
                 return new Message("INQUIRY_FAILED", st.getErrorCode());
             }
-        }
-        // } else if ("detailed".equalsIgnoreCase(inquiryType)) {
-        // // 2b) Bank'a "INQUIRY_DETAILED" isteği
-        // Status st = network.sendInquiryRequest(accountNum, "DETAILED");
-        // if (st.isSuccess()) {
-        // // "st.getTransactionList()" vs. => son 10 işlem
-        // display.display("Recent transactions: " + st.getTransactionList());
-        // return new Message("INQUIRY_DETAILED_OK", "See last 10 transactions");
-        // } else {
-        // return new Message("INQUIRY_FAILED", st.getErrorCode());
-        // }
-
-        // }
-        else {
+        } else if ("detailed".equalsIgnoreCase(inquiryType)) {
+            List<Object> result = network.sendInquiryRequest(accountNum, "DETAILED");
+            Status st = (Status) result.get(0);
+            if (st.isSuccess()) {
+                // st içinde "transactionList" vb. var varsayalım
+                List<String> transactionList = (List<String>) result.get(1);
+                display.display("Recent transactions: ");
+                for (String tr : transactionList) {
+                    display.display(tr);
+                }
+                return new Message("INQUIRY_DETAILED_OK", "See last 10 transactions");
+            } else {
+                return new Message("INQUIRY_FAILED", st.getErrorCode());
+            }
+        } else {
             return new Message("INVALID_INQUIRY_TYPE", "Unknown inquiry type: " + inquiryType);
         }
     }

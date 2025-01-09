@@ -3,6 +3,7 @@ package atmSrc;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import com.google.gson.Gson;
 
@@ -85,4 +86,19 @@ public class DatabaseProxy {
             this.bankData = new BankData(); // fallback
         }
     }
+
+    public List<String> getLast10Transactions(int accountNum) {
+        Account account = findAccount(accountNum);
+        return account.getTransactionHistory();
+    }
+
+    public boolean updatePassword(int accountNum, String newPwd) {
+        Account acc = findAccount(accountNum);
+        if (acc == null) {
+            return false;
+        }
+        acc.setPassword(newPwd);
+        return true;
+    }
+
 }

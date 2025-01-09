@@ -1,9 +1,12 @@
 package atmSrc;
 
+import java.util.List;
+
 public class Account {
     private int accountNumber;
     private String password;
     private String status; // örn: "active", "frozen"
+    private List<String> transactionHistory; //
     private int invalidPasswordCount = 0;
     private double dailyUsed = 0;
     private Balance balance;
@@ -65,5 +68,13 @@ public class Account {
 
     public void setBalance(Balance balance) {
         this.balance = balance;
+    }
+
+    public List<String> getTransactionHistory() {
+        return transactionHistory;
+    }
+
+    public void setTransactionHistory(List<String> transactionHistory) {
+        this.transactionHistory = transactionHistory;
     }
 }
