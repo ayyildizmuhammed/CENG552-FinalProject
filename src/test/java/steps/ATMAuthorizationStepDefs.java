@@ -1,4 +1,4 @@
-package runner;
+package steps;
 
 import atmSrc.ATM;
 import atmSrc.Bank;
