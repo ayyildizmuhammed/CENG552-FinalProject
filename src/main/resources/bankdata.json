@@ -38,7 +38,24 @@
             "invalidPasswordCount": 0
         },
         {
-            "accountNumber": 9999,
+            "accountNumber": 8888,
+            "password": 3333,
+            "status": "frozen",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "transactionHistory": [
+                "Deposit 1000",
+                "Withdraw 100",
+                "Withdraw 100",
+                "Withdraw 100"
+            ],
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        },
+        {
+            "accountNumber": 4444,
             "password": 3333,
             "status": "frozen",
             "balance": {

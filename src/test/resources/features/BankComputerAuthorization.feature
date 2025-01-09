@@ -19,15 +19,15 @@ Feature: Bank Computer Authorization (FR1–FR6)
 
   # FR3–FR6: Password check, account status check
   Scenario Outline: Verify password and account
-    Given an account with number <accNum> has status "<accStatus>"
+    Given a bank code <bankCode>
+    And an account with number <accNum> has status "<accStatus>"
     And the password "<pwd>"
-    And the bank code is <bankCode>
     When the bank verifies the card with password
     Then the bank result should be "<expected>"
 
     Examples:
-      | accNum | accStatus | pwd  | bankCode | expected        |
-      | 1234   | active    | 1111 | 1001     | account ok      |  # FR6
-      | 1234   | active    | 9999 | 1001     | bad password    |  # FR4
-      | 9999   | frozen    | 3333 | 1001     | bad account     |  # FR5
-      | 4321   | active    | 1234 | 5555     | bad bank code   |  # FR2
+      | bankCode | accNum | accStatus | pwd  | expected        |
+      | 1001     | 1234   | active    | 1111 | account ok      |  # FR6
+      | 1001     | 1234   | active    | 9999 | bad password    |  # FR4
+      | 1001     | 4444   | frozen    | 3333 | bad account     |  # FR5
+      | 5555     | 4321   | active    | 1234 | bad bank code   |  # FR2

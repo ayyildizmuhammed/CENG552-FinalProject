@@ -19,7 +19,7 @@ Feature: Bank Computer Transaction (FR7–FR10)
       | 1234   | 0         | 2000 | 300    | transaction succeeded |
       | 1234   | 1800      | 2000 | 300    | transaction failed    |
 
-  # FR8: Update account after money is dispensed
+  # FR8: Update account after money dispensed
   Scenario: Account update after money dispensed
     Given an account with number 1234 has balance 1000
     When the bank receives "money dispensed" for amount 300
