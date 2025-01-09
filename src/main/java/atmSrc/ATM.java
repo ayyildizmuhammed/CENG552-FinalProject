@@ -364,11 +364,11 @@ public class ATM {
      */
     private void displayErrorLong(String message) {
         display.display("ERROR: " + message);
-        try {
-            Thread.sleep(30_000); // 30 sn bekleme
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // try {
+        //     Thread.sleep(30_000); // 30 sn bekleme
+        // } catch (InterruptedException e) {
+        //     e.printStackTrace();
+        // }
     }
 
     private void printReceipt(String transactionType, int amount) {

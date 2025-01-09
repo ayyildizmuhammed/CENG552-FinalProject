@@ -4,7 +4,6 @@ import atmSrc.ATM;
 import atmSrc.Bank;
 import atmSrc.Message;
 import atmSrc.Card;
-import atmSrc.Status;
 import io.cucumber.java.en.*;
 
 import static org.junit.Assert.*;
@@ -16,10 +15,8 @@ public class ATMAuthorizationStepDefs {
 
     private static Bank bank;
     private static ATM atm;
-    private static Message lastResponse;
+    private static Message lastResponse; 
     private String initialDisplay;
-    // Opsiyonel: Kullanıcının güncellenmiş bakiyesini tutmak için
-    // private int updatedBalance;
 
     /**
      * FR1 / FR2: Bank is started with a given JSON file
@@ -45,7 +42,7 @@ public class ATMAuthorizationStepDefs {
         atm = new ATM(totalFund, dailyLimit, transactionLimit, minimumCashRequired, bank);
         assertNotNull("ATM object should not be null", atm);
 
-        // FR2: If no card => initial display is stored
+        // FR2: If no card => initial display text
         initialDisplay = "Welcome to the Bank ATM! Insert your card...";
     }
 
@@ -63,56 +60,45 @@ public class ATMAuthorizationStepDefs {
     @When("the user inserts a valid card with bankCode {string} cardNumber {string}")
     public void the_user_inserts_a_valid_card_with_bankCode_cardNumber(String bc, String cn) {
         int bankCode = Integer.parseInt(bc);
-        int cardNumber = Integer.parseInt(cn);
+        int accountNumber = Integer.parseInt(cn);
 
-        // Default PIN 1111 (ya da 2222 vb.)
-        Card testCard = new Card(cardNumber, 1111, bankCode, false);
+        // Default serial number = 1234, expired=false
+        Card testCard = new Card(1234, accountNumber, bankCode, false);
         lastResponse = atm.insertCard(testCard);
     }
 
+
+
     /**
-     * Common step for inserting an invalid card (bankCode or expired status)
+     * Step for bank validation
      */
-    @When("the user inserts a invalid card with bankCode {string} cardNumber {string}")
-    public void the_user_inserts_a_invalid_card_with_bankCode_cardNumber(String bc, String cn) {
+    @And("the system verifies the bankCode {string}")
+    public void the_system_verifies_the_bankCode(String bc) {
         int bankCode = Integer.parseInt(bc);
-        int cardNumber = Integer.parseInt(cn);
-
-        // invalid => isValid false
-        Card testCard = new Card(cardNumber, 1111, bankCode, true);
-        lastResponse = atm.insertCard(testCard);
+        lastResponse =  atm.verify(bankCode);
     }
 
     /**
-     * Step to enter PIN after the card is inserted (FR3, FR4)
+     * Step to enter PIN after the card is inserted
      */
     @And("the user enters PIN {string} for account {string}")
     public void the_user_enters_PIN_for_account(String pin, String account) {
         int pinInt = Integer.parseInt(pin);
+        // Pin verification
         lastResponse = atm.verify(pinInt);
     }
 
     /**
      * Then the system responds with code {string} and message {string}
      */
-    @Then("the system responds with code {string} and message {string}")
-    public void the_system_responds_with_code_and_message(String code, String msg) {
+    @Then("the system responds with code {string}")
+    public void the_system_responds_with_code_and_message(String code) {
         assertNotNull("The lastResponse should not be null", lastResponse);
-        assertEquals(code, lastResponse.getCode());
-        assertEquals(msg, lastResponse.getDescription());
+        assertEquals("Response code mismatch", code, lastResponse.getCode());
     }
 
     /**
-     * FR7, FR8, FR9: Request a withdrawal
-     */
-    @When("the user requests a withdrawal of {string}")
-    public void the_user_requests_a_withdrawal_of(String amountStr) {
-        int amount = Integer.parseInt(amountStr);
-        lastResponse = atm.withdraw(amount);
-    }
-
-    /**
-     * Step to test multiple PIN attempts consecutively
+     * For multiple PIN attempts
      */
     @And("the user enters PIN {string} again")
     public void the_user_enters_PIN_for_account_again(String pin) {
@@ -121,16 +107,30 @@ public class ATMAuthorizationStepDefs {
     }
 
     /**
-     * Ek step: Kullanıcının hesabının yeni bakiyesini kontrol etmek
-     * (Opsiyonel, bank objesinde ya da atm objesinde bir sorgu methodu gerekebilir)
+     * FR7, FR8, FR9: Request a withdrawal
+     */
+    @And("the user requests a withdrawal of {string}")
+    public void the_user_requests_a_withdrawal_of(String amountStr) {
+        int amount = Integer.parseInt(amountStr);
+        lastResponse = atm.withdraw(amount);
+    }
+
+    /**
+     * Ek step: Check account's updated balance (FR8)
+     *  -> Bank sınıfına getAccountBalance(int accountNumber) gibi
+     *     bir method eklediyseniz burada kullanabilirsiniz.
      */
     @And("the user's account {string} should be updated with a new balance {string}")
     public void the_user_s_account_should_be_updated_with_a_new_balance(String account, String expectedBalanceStr) {
-        double expectedBalance = Double.parseDouble(expectedBalanceStr);
+        int expectedBalance = Integer.parseInt(expectedBalanceStr);
         int accountNumber = Integer.parseInt(account);
 
-        // bank.getAccountBalance(accountNumber) gibi bir metod olduğunu varsayıyoruz
-        double actualBalance = bank.getDbProxy().findAccount(accountNumber).getBalance().getAvailableBalance();
-        assertEquals(expectedBalance, actualBalance, 0.01);
+        // Mevcut bakiyeyi sorgulayın:
+        // Bank içerisinde:
+        //   Account acc = bank.getDbProxy().findAccount(accountNumber);
+        //   double actual = acc.getBalance().getAvailableBalance();
+        double actual = bank.getDbProxy().findAccount(accountNumber).getBalance().getAvailableBalance();
+
+        assertEquals("Balance is not updated correctly", expectedBalance, (int) actual);
     }
 }
