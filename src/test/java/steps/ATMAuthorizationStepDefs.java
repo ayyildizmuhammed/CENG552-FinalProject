@@ -1,4 +1,4 @@
-package steps;
+package runner;
 
 import atmSrc.ATM;
 import atmSrc.Bank;
@@ -16,11 +16,13 @@ public class ATMAuthorizationStepDefs {
 
     private static Bank bank;
     private static ATM atm;
-    private static Message lastResponse; 
+    private static Message lastResponse;
     private String initialDisplay;
+    // Opsiyonel: Kullanıcının güncellenmiş bakiyesini tutmak için
+    // private int updatedBalance;
 
     /**
-     * FR1: Bank is started with a given JSON file
+     * FR1 / FR2: Bank is started with a given JSON file
      */
     @Given("the Bank is started with {string}")
     public void the_Bank_is_started_with(String jsonFilePath) {
@@ -29,7 +31,7 @@ public class ATMAuthorizationStepDefs {
     }
 
     /**
-     * FR1: ATM is started with given parameters
+     * FR1 / FR2: ATM is started with given parameters
      */
     @Given("the ATM is started with totalFund {string}, dailyLimit {string}, transactionLimit {string}, minCashRequired {string}")
     public void the_ATM_is_started_with_totalFund_dailyLimit_transactionLimit_minCashRequired(
@@ -56,37 +58,37 @@ public class ATMAuthorizationStepDefs {
     }
 
     /**
-     * Common step for inserting card
+     * Common step for inserting a valid card
      */
     @When("the user inserts a valid card with bankCode {string} cardNumber {string}")
     public void the_user_inserts_a_valid_card_with_bankCode_cardNumber(String bc, String cn) {
         int bankCode = Integer.parseInt(bc);
         int cardNumber = Integer.parseInt(cn);
 
-        // Using default PIN 1111 or any, 
-        // but real approach might read the PIN from a data table or scenario
-        Card testCard = new Card(cardNumber, 1111, bankCode, true);
-        lastResponse = atm.insertCard(testCard);
-    }
-    @When("the user inserts a invalid card with bankCode {string} cardNumber {string}")
-    public void the_user_inserts_a_invalid_card_with_bankCode_cardNumber(String bc, String cn) {
-        int bankCode = Integer.parseInt(bc);
-        int cardNumber = Integer.parseInt(cn);
-
-        // Using default PIN 1111 or any, 
-        // but real approach might read the PIN from a data table or scenario
+        // Default PIN 1111 (ya da 2222 vb.)
         Card testCard = new Card(cardNumber, 1111, bankCode, false);
         lastResponse = atm.insertCard(testCard);
     }
 
     /**
-     * Step to enter PIN after the card is inserted
+     * Common step for inserting an invalid card (bankCode or expired status)
      */
-    @Then("the user enters PIN {string} for account {string}")
+    @When("the user inserts a invalid card with bankCode {string} cardNumber {string}")
+    public void the_user_inserts_a_invalid_card_with_bankCode_cardNumber(String bc, String cn) {
+        int bankCode = Integer.parseInt(bc);
+        int cardNumber = Integer.parseInt(cn);
+
+        // invalid => isValid false
+        Card testCard = new Card(cardNumber, 1111, bankCode, true);
+        lastResponse = atm.insertCard(testCard);
+    }
+
+    /**
+     * Step to enter PIN after the card is inserted (FR3, FR4)
+     */
+    @And("the user enters PIN {string} for account {string}")
     public void the_user_enters_PIN_for_account(String pin, String account) {
         int pinInt = Integer.parseInt(pin);
-        // We don't necessarily need the account here to call verify, 
-        // but let's store if we want to do a check
         lastResponse = atm.verify(pinInt);
     }
 
@@ -110,11 +112,25 @@ public class ATMAuthorizationStepDefs {
     }
 
     /**
-     * Utility step if you want to chain multiple PIN attempts:
+     * Step to test multiple PIN attempts consecutively
      */
     @And("the user enters PIN {string} again")
     public void the_user_enters_PIN_for_account_again(String pin) {
         int pinInt = Integer.parseInt(pin);
         lastResponse = atm.verify(pinInt);
+    }
+
+    /**
+     * Ek step: Kullanıcının hesabının yeni bakiyesini kontrol etmek
+     * (Opsiyonel, bank objesinde ya da atm objesinde bir sorgu methodu gerekebilir)
+     */
+    @And("the user's account {string} should be updated with a new balance {string}")
+    public void the_user_s_account_should_be_updated_with_a_new_balance(String account, String expectedBalanceStr) {
+        double expectedBalance = Double.parseDouble(expectedBalanceStr);
+        int accountNumber = Integer.parseInt(account);
+
+        // bank.getAccountBalance(accountNumber) gibi bir metod olduğunu varsayıyoruz
+        double actualBalance = bank.getDbProxy().findAccount(accountNumber).getBalance().getAvailableBalance();
+        assertEquals(expectedBalance, actualBalance, 0.01);
     }
 }

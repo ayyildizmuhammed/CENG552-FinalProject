@@ -1,0 +1,220 @@
+Scenarios
+
+1)  First, a user should insert a cash card into the ATM. After it, the user should finish each step with 60 seconds. otherwise, the ATM will swallow the card.
+
+2)  Second, the system will show a interface that let the user to enter the password. And there are three options: correction, confirm, Take the card.
+        If the user find that he entered wrong password, then he can choose the correction option, and he can enter the password again.
+        Then, he(she) should choose the confirm option, and the ATM system will communicate with the bank system as well as check whether the password entered is right. 
+        If it's not correct, it will show the wrong information and user should enter password again. 
+        However, if the user can just entered the wrong password three times, the card will be frozen.
+
+3)  After the user entered the right password, the interface will show some options(such changing password, Transfer money, Inquiry, withdrawal, deposit, take the card).
+
+4)  If the user choose the option of changing password, then the system will ask the user to enter the original password. 
+        After the user entered the correct password, then the user can enter the new password to change the old password.
+
+5)  If the user choose the option of Transfer money, then the system will first show some prompts. 
+        After the user confirmed, then he(she) can enter the account that he(she) want to transfer money to.
+        At last, he(she) should enter the amount of money he(she) want to transfer and confirm.
+
+6)  If the user choose the option of Inquiry, then the system will show two options, the first one is detailed inquiry, the second one is balance inquiry.
+        If the user choose the first one, then it will show the recent ten transactions details. 
+        If the user choose the second one, it will show balance of the account and the balance that can be used.
+
+7)  If the user choose the option of withdrawal, it will show a interface that let the user to enter the amount of money he(she) want to withdraw. 
+        After the user entered the number and confirmed, the ATM will send the money to the user. 
+        However, if the amount entered by the user exceeds the balance in the card, then it show a message to tell the user. 
+        And then the user should enter a appropriate amount and confirm. 
+        At last, the system will show a show a successful transaction message(includes the amount of the transaction and the fee).
+
+8)  If the user choose the option of deposit, then it open the cover, and show a message to let the user to put the money into the ATM.
+        If there are no faults, then it will show some successful information to the user.
+
+9)  If the user choose the option of take the card, then he can retrieve his(her) card and end the transaction.
+
+
+Functional Requirements
+
+    Functional Requirement 1
+        Description: Initialize parameters t,k,m,n: 
+                        t = Total fund in the ATM at start of day
+                        k = Maximum withdrawal per day and account
+                        m = mMximum withdrawal per transaction
+                        n = Minimum cash in the ATM to permit a transaction
+        Input: ATM is initialized with t dollars k,m,n are entered.
+        Processing: Storing the parameters.
+        Output: Parameters are set.
+    
+    Functional Requirement 2
+        Description: If no cash card is in the ATM, the system should display initial display.
+
+    Functional Requirement 3
+        Description: If ATM is running out of money, no card should be accepted. An error message is displayed.
+        Input: A card is entered.
+        Processing: The amount of cash is less than total fund in the ATM at start of day.
+        Output: Display an error message Return cash card.
+        
+    Functional Requirement 4
+        Description: The ATM has to check if the entered card is a valid cash-card.
+        Input: Customer enters the cash card.
+        Processing: Check if it is a valid cash card. It will be valid if
+                    1- the information on the card can be read.
+                    2- it is not expired.
+        Output: Display error message and return cash card if it is invalid.
+        
+    Functional Requirement 5
+        Description: If the cash card is valid, the ATM should read the serial number and bank code.
+        Input: Valid cash card.
+        Processing: Read the serial number.
+        Output: Initiate authorization dialog.
+    
+    Functional Requirement 6
+        Description: The serial number should be logged.
+        Input: Serial number from cash card
+        Processing: Log the number
+        Output: Update to log file.
+    
+    Functional Requirement 7        
+        Description: Authorization dialog : The user is requested to enter his password. The ATM verifies the bank code and password with the bank computer
+        Input: Password from user, bank code from cash card.
+        Processing: Send serial number and password to bank computer, receive response from bank.
+        Output: Accept or reject authorization from bank.
+    
+    Functional Requirement 8        
+        Description: Different negative answers from bank computer for authorization dialog.
+        Input: Response from bank or authorization dialog :
+                "bad password" if the password was wrong,
+                "bad bank code" if the cash card of the bank is not supported by the ATM,
+                "bad account" if there are problems with the account.
+        Processing:If the ATM gets any of these messages from the bank computer, the card will be ejected and the user will get the relevant error message.
+        Output: Card is ejected and error message is displayed.
+        
+    Functional Requirement 9
+        Description: If password and serial number are ok, the authorization process is finished
+        Input: The ATM gets accept from the bank computer from authorization process
+        Processing: Finishing authorization
+        Output: Start transaction dialog
+        
+    Functional Requirement 10
+        Description: If a card was entered more than three times in a row at any ATM and the password was wrong each time, the card is kept by the ATM. A message will be displayed that the customer should call the bank.
+        Input: Entering a wrong password for the fourth time in succession
+        Processing: Initiate authorization process. Response from bank computer is to keep the card
+        Output: Display error message that the customer should call the bank.
+    
+    Functional Requirement 11
+        Description: The kind of transactions the ATM offers is: withdrawal
+        Input: Authorization successfully completed. Enter the amount to withdraw.
+        Processing: Amount entered is compared with m ( m = Maximum withdrawal per transaction)
+        Output: Amount of money to be dispensed is displayed. Begin initial withdrawal sequence.
+        
+    Functional Requirement 12
+        Description:Initial withdrawal sequence : If it is too much withdrawal redo the transaction.
+        Input: Customer has entered the amount of money
+        Processing: Error if the amount is greater than m (m = Maximum withdrawal per transaction)
+        Output: Start transaction or re-initiate transaction dialog if the amount is not within the pre-defined transaction policy.
+        
+    Functional Requirement 13
+        Description: Perform transaction
+        Input: Initial withdrawal sequence successful
+        Processing: Send request to the bank computer.
+        Output: Wait for response from the bank computer.
+    
+    Functional Requirement 14
+        Description: If the transaction is successful, the money is dispensed.
+        Input: ATM gets message "transaction succeeded" from the bank computer.
+        Processing: ATM prints receipt, updates Total fund in the ATM at start of day and ejects the card. Dialog Customer should take the card.
+        Output: After the Customer has taken the card the money is dispensed.
+    
+    Functional Requirement 15    
+        Description: If the money is dispensed, the amount is logged
+        Input: The number of 20 yuan bills requested is dispensed to the customer.
+        Processing: Log the amount of money against the serial number of the card.
+        Output: Amount logged together with the serial number. Response sent to bank for money dispensed.
+    
+    Functional Requirement 16
+        Description: If the transaction is not successful, an error message should be displayed. The card should be ejected.
+        Input: ATM gets message "transaction not successful" from the bank computer.
+        Processing: ATM displays error message, Dialog : "Customer should take the card"
+        Output: Eject card.
+    
+    Functional Requirement 17    
+        Description: If customer want transfer money from one account to another account.
+        Input: Banck account number and amount want tranfer.
+        Processing: verify the bank account and the amount
+        Output: send transaction log to database and message to display
+        
+    Functional Requirement 18
+        Description: The bank computer checks if the the bank code is valid. A bank code is valid if the cash card was issued by the bank.
+        Input: Request from the ATM to verify card Serial number and password.
+        Processing: Check if the cash card was issued by the bank.
+        Output: Valid or invalid bank code.
+    
+    Functional Requirement 19
+        Description: If it is not a valid bank code, the bank computer will send a message to the ATM.
+        Input: Invalid bank code
+        Processing: Process message
+        Output: The bank computer sends the message "bad bank code" to the ATM.
+        
+    Functional Requirement 20
+        Description: The bank computer checks if the the password is valid for a valid cash card.
+        Input: Request from the ATM to verify password
+        Processing: Check password of the customer.
+        Output: Valid or invalid password
+    
+    Functional Requirement 21
+        Description: If it is not a valid password, the bank computer will send a message to the ATM
+        Input: Invalid password
+        Processing: Process message, Update count for in valid password for the account.
+        Output: The bank computer sends the message "bad password" to the ATM.
+    
+    Functional Requirement 22
+        Description: If it is a valid cash card and a valid password but there are problems with the account, the bank will send a message to the ATM that there are problems
+        Input: Valid cash card and password
+        Processing: Process message
+        Output: The bank sends "bad account" to the ATM.
+        
+    Functional Requirement 23
+        Description: If it is a valid cash card, a valid password and there are no problems with the account the bank computer will send a message to the ATM that everything is ok
+        Input: Valid cash card, password and account
+        Processing: Process message
+        Output: Send "account ok" to the ATM.
+    
+    Functional Requirement 24
+        Description: After a request the bank computer processes the transaction.
+        Input: Request to process a transaction on an account and amount m to withdraw.
+        Processing: Process transaction ( together with the software of the bank). Update k for amount (k = Maximum withdrawal per day and account)
+        Output: If transaction succeeded, the bank computer sends the message "transaction succeeded" to the ATM. If not, it will send "transaction failed".
+    
+    Functional Requirement 25
+        Description: Update account after money is dispensed
+        Input: Response from ATM about money dispensed.
+        Processing: Updates account
+        Output: New account record
+    
+    Functional Requirement 26
+        Description: Each bank has a limit k for each account about the amount of money that is a vailable via cash card each day/monthly
+        Input: Request to process transaction.
+        Processing: Check if the amount of money does not exceed k (k = Maximum withdrawal per day and account)
+        Output: If the amount exceeds the limit, the transaction will fail.
+        
+    Functional Requirement 27
+        Description: The bank only provides security for their own computer and their own software. 
+    
+    Functional Requirement 28
+        Description: The bank computer will send a message to the ATM that the transaction is not successful if the transaction is not successful.
+    
+    Functional Requirement 29
+        Description: If there is no response from the bank computer after a request within 2 minutes the card is rejected with an error message
+        
+    Functional Requirement 30
+        Description: The ATM dispenses money if and only if the withdrawal from the account is processed and accepted by the bank.
+        
+    Functional Requirement 31
+        Description: Each bank may be processing transactions from several ATMs at the same time.
+        
+    Functional Requirement 32
+        Description: In order to ensure the accuracy of the cash.
+                    The cash machine of ATM can accurately identify the denomination of cash.
+                     The machine must be inspected more than three times, regardless of withdrawing money or saving money. If the cash error, re-check three times, three consecutive incorrect cash will be returned to the user.
+        
+    
