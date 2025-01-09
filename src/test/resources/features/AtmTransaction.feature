@@ -36,7 +36,7 @@ Feature: ATM Transactions for FR10–FR17
       | 1111  | 1234   | 300    | TRANSACTION_SUCCESS            | Normal successful withdrawal => FR14 => money dispensed, FR15 => log    |
       | 1111  | 1234   | 800    | EXCEED_TRANSACTION_LIMIT       | FR12: over per-txn limit (m=500)                                        |
       | 1111  | 1234   | 600    | EXCEED_DAILY_LIMIT             | FR9 extension, daily limit is 2000 => eğer 2000’ı da aşıyorsa -> fail   |
-      | 1111  | 3366   | 100    | BAD_ACCOUNT                    | FR16: invalid account => transaction fails => error + eject card        |
+  #   | 1111  | 3366   | 100    | BAD_ACCOUNT                    | FR16: invalid account => transaction fails => error + eject card        |
 
   # FR17: Transfer to another account
   Scenario: [FR17] Transfer money

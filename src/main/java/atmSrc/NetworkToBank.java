@@ -29,6 +29,7 @@ public class NetworkToBank {
     public Status sendAuthorizationRequest(int bankCode, int accountNumber, String password) {
         openConnection();
         String result = bank.verifyAccount(bankCode, accountNumber, password);
+        System.out.println("[NetworkToBank] Authorization result: " + result +  " for account: " + accountNumber);
         closeConnection();
 
         switch (result) {

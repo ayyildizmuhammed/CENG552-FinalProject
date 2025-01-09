@@ -115,20 +115,17 @@ public class ATMAuthorizationStepDefs {
         lastResponse = atm.withdraw(amount);
     }
 
-    /**
-     * Ek step: Check account's updated balance (FR8)
-     *  -> Bank sınıfına getAccountBalance(int accountNumber) gibi
-     *     bir method eklediyseniz burada kullanabilirsiniz.
-     */
+
+
     @And("the user's account {string} should be updated with a new balance {string}")
     public void the_user_s_account_should_be_updated_with_a_new_balance(String account, String expectedBalanceStr) {
         int expectedBalance = Integer.parseInt(expectedBalanceStr);
         int accountNumber = Integer.parseInt(account);
 
-        // Mevcut bakiyeyi sorgulayın:
-        // Bank içerisinde:
-        //   Account acc = bank.getDbProxy().findAccount(accountNumber);
-        //   double actual = acc.getBalance().getAvailableBalance();
+
+
+
+
         double actual = bank.getDbProxy().findAccount(accountNumber).getBalance().getAvailableBalance();
 
         assertEquals("Balance is not updated correctly", expectedBalance, (int) actual);
