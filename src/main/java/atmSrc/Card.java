@@ -1,25 +1,31 @@
 package atmSrc;
 
 public class Card {
-    private int number;
-    private boolean expired;
+    private int serialNumber;
+    private int accountNumber;
     private int bankCode;
+    private boolean expired;
 
-    public Card(int number, boolean expired, int bankCode) {
-        this.number = number;
-        this.expired = expired;
+    public Card(int serialNumber, int accountNumber, int bankCode, boolean expired) {
+        this.serialNumber = serialNumber;
+        this.accountNumber = accountNumber;
         this.bankCode = bankCode;
+        this.expired = expired;
     }
 
-    public int getNumber() {
-        return this.number;
+    public int getSerialNumber() {
+        return this.serialNumber;
     }
 
-    public boolean isExpired() {
-        return expired;
+    public int getAccountNumber() {
+        return this.accountNumber;
     }
 
     public int getBankCode() {
         return bankCode;
+    }
+
+    public boolean isExpired() {
+        return expired;
     }
 }

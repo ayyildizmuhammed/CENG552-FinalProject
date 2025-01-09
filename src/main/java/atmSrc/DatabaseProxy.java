@@ -19,6 +19,21 @@ public class DatabaseProxy {
         return this.bankData;
     }
 
+    public boolean saveCurrentData() {
+        try {
+            Gson gson = new Gson();
+            String jsonString = gson.toJson(bankData);
+            Path path = Paths.get(getClass().getClassLoader().getResource("bankdata.json").toURI());
+            Files.writeString(path, jsonString);
+            System.out.println("[Bank] JSON data saved to bankdata.json");
+            loadData("bankdata.json");
+            return true;
+        } catch (Exception e) {
+            System.err.println("[Bank] Failed to save JSON data: " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean isValidBankCode(int code) {
         if (bankData == null || bankData.getValidBankCodes() == null)
             return false;

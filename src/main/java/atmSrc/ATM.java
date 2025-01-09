@@ -54,7 +54,7 @@ public class ATM {
         }
     }
 
-    public Message enterPinWithMenu(int pin, int accountNum) {
+    public Message enterPinWithMenu(int pin) {
         // Simüle: menüyü göster
         int choice = display.showPinMenu();
         if (choice == 2) {
@@ -68,7 +68,7 @@ public class ATM {
             return new Message("TAKE_CARD", "Card ejected, transaction canceled.");
         } else {
             // Normal confirm flow => verify
-            return verify(pin, accountNum);
+            return verify(pin);
         }
     }
 
@@ -120,12 +120,14 @@ public class ATM {
         }
 
         // Bank code & serial
-        int serial = card.getNumber();
+        int serial = card.getSerialNumber();
         int bankCode = card.getBankCode();
+        int accountNumber = card.getAccountNumber();
 
         // FR5: read serial, FR6: log
         session.setCardNumber(serial);
         session.setBankCode(bankCode);
+        session.setAccountNumber(accountNumber);
         log.logSerialNumber(serial);
 
         // Zaman kaydı (Performance Requirements 2 - 2 dakika response vs.)
@@ -135,20 +137,21 @@ public class ATM {
         return new Message("CARD_ACCEPTED", "Card accepted, please enter your PIN.");
     }
 
-    public Message verify(int enteredPin, int accountNum) {
+    public Message verify(int enteredPin) {
         if (!this.cardInserted) {
             return new Message("NO_CARD", "No card inserted.");
         }
 
         long now = System.currentTimeMillis();
-        if ((now - this.requestTimestamp) > 60 * 1000) {
+        if ((now - this.requestTimestamp) > 2 * 60 * 1000) {
             cardReader.ejectCard();
             this.cardInserted = false;
-            return new Message("TIMEOUT", "No response for 60 seconds, card ejected.");
+            return new Message("TIMEOUT", "No response for 120 seconds, card ejected.");
         }
 
         // Bank code from session
         int bankCode = session.getBankCode();
+        int accountNum = session.getAccountNumber();
 
         // NetworkToBank => Bank
         Status st = this.network.sendAuthorizationRequest(bankCode, accountNum, String.valueOf(enteredPin));
@@ -246,11 +249,7 @@ public class ATM {
         // ATM local fund update
         this.totalFund -= amount;
 
-        // FR14 => "After the Customer has taken the card the money is dispensed."
-        cardReader.ejectCard();
-        this.cardInserted = false;
-
-        return new Message("TRANSACTION_SUCCESS", "Withdrawal done. Card ejected.");
+        return new Message("TRANSACTION_SUCCESS", "Withdrawal done.");
     }
 
     /**
@@ -272,14 +271,9 @@ public class ATM {
 
         if (!st.isSuccess()) {
             displayErrorLong("Transfer failed: " + st.getErrorCode());
-            cardReader.ejectCard();
-            this.cardInserted = false;
             return new Message("TRANSFER_FAILED", st.getErrorCode());
         }
 
-        // Success
-        cardReader.ejectCard();
-        this.cardInserted = false;
         return new Message("TRANSFER_SUCCESS",
                 "Transfer completed successfully.");
     }

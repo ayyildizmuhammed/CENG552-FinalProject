@@ -30,14 +30,14 @@ public class ATMStepDefinitions {
     @Given("I insert a valid card")
     public void iInsertAValidCard() {
         // Örnek card: number=12345, expired=false, bankCode=1001
-        card = new Card(12345, false, 1001);
+        card = new Card(12345, 1234, 1001, false);
         lastMessage = atm.insertCard(card);
     }
 
     @Given("I insert a second valid card number {int} with bank code {int}")
     public void iInsertASecondValidCard(int cardNumber, int bankCode) {
         // Örnek: secondCard = new Card(99999, false, 1001)
-        card = new Card(cardNumber, false, bankCode);
+        card = new Card(12345, 1234, 1001, false);
         lastMessage = atm.insertCard(card);
     }
 
@@ -45,14 +45,14 @@ public class ATMStepDefinitions {
     public void iEnterWrongPasswordTimes(int times, int accountNum) {
         // 4 kez deneyelim
         for (int i = 0; i < times; i++) {
-            lastMessage = atm.verify(9999, accountNum); // 9999 => wrong pin
+            lastMessage = atm.verify(9999); // 9999 => wrong pin
         }
     }
 
     @When("I enter the correct password {int} for account {int}")
     public void iEnterTheCorrectPassword(int password, int accountNum) {
         // DBProxy’de 1234 accountNum varsa PIN=1111 demiştiniz
-        lastMessage = atm.verify(password, accountNum);
+        lastMessage = atm.verify(password);
     }
 
     @When("I attempt to withdraw {int}")

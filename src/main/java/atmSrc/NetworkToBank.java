@@ -19,6 +19,7 @@ public class NetworkToBank {
     }
 
     public void closeConnection() {
+        this.bank.persistChanges();
         System.out.println("[NetworkToBank] Connection closed Address: " + bankAddress);
     }
 
@@ -66,7 +67,10 @@ public class NetworkToBank {
     public Status sendMoneyDispensedRequest(int accountNumber, double amount) {
         openConnection();
         Account account = bank.getDbProxy().findAccount(accountNumber);
-        bank.getDbProxy().minusBalance(account.getAccountNumber(), amount);
+        bank.getDbProxy().applyWithdrawal(account.getAccountNumber(), amount);
+        List<String> transactionHistory = account.getTransactionHistory(); 
+        transactionHistory.add("Withdrawal: " + amount);
+        account.setTransactionHistory(transactionHistory);
         closeConnection();
         return new Status(true, "account updated");
     }
@@ -75,12 +79,22 @@ public class NetworkToBank {
         openConnection();
         Account fromAccount = bank.getDbProxy().findAccount(fromAccountNumber);
         Account toAccount = bank.getDbProxy().findAccount(toAccountNumber);
+        if(fromAccount == null || toAccount == null) {
+            closeConnection();
+            return new Status(false, "transaction failed: account not found");
+        }
         if (amount > fromAccount.getBalance().getAvailableBalance()) {
             closeConnection();
             return new Status(false, "transaction failed: insufficient funds");
         }
         bank.getDbProxy().minusBalance(fromAccount.getAccountNumber(), amount);
         bank.getDbProxy().plusBalance(toAccount.getAccountNumber(), amount);
+        List<String> fromTransactionHistory = fromAccount.getTransactionHistory();
+        fromTransactionHistory.add("Transfer to " + toAccount.getAccountNumber() + ": " + amount);
+        fromAccount.setTransactionHistory(fromTransactionHistory);
+        List<String> toTransactionHistory = toAccount.getTransactionHistory();
+        toTransactionHistory.add("Transfer from " + fromAccount.getAccountNumber() + ": " + amount);
+        toAccount.setTransactionHistory(toTransactionHistory);
         closeConnection();
         return new Status(true, "transfer succeeded");
     }
@@ -89,6 +103,10 @@ public class NetworkToBank {
         openConnection();
         // Bank side => dbProxy.plusBalance(accountNum, amount), e.g.:
         bank.getDbProxy().plusBalance(accountNum, amount);
+        Account account = bank.getDbProxy().findAccount(accountNum);
+        List<String> transactionHistory = account.getTransactionHistory();
+        transactionHistory.add("Deposit: " + amount);
+        account.setTransactionHistory(transactionHistory);
         closeConnection();
         return new Status(true, "deposit succeeded");
     }

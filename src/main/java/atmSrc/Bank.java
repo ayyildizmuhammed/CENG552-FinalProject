@@ -37,4 +37,15 @@ public class Bank {
         // FR6: her şey yolunda
         return "account ok";
     }
+
+    public Status persistChanges() {
+        // FR7: değişiklikleri kaydet
+        boolean result = this.dbProxy.saveCurrentData();
+        if (result) {
+            return new Status(true, "Data saved successfully");
+        } else {
+            return new Status(false, "Failed to save data");
+        }
+
+    }
 }

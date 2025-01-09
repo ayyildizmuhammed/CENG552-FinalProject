@@ -12,7 +12,7 @@ public class DemoATM {
         // 2) Kart Oluşturma
         // Card(number, expired, bankCode)
         // Bank code = 1001 geçerli (Bank.java içinde sabitledik)
-        Card validCard = new Card(12345, false, 1001);
+        Card validCard = new Card(12345, 1111, 1001, false);
 
         // 3) Kartı ATM'ye takma (insertCard)
         // Beklenen: "CARD_ACCEPTED"
@@ -24,7 +24,7 @@ public class DemoATM {
         // Bu senaryoda DBProxy’de 1234 accountNum varsa PIN=1111
         // Hatalı PIN girersek (örn. 9999), BAD_PASSWORD dönecek.
         System.out.println("\n=== DEMO: Enter PIN ===");
-        Message msgVerify = atm.verify(1111, 1234);
+        Message msgVerify = atm.verify(1111);
         System.out.println("verify -> " + msgVerify);
 
         // 5) Para çekme senaryosu: FR11–FR16
@@ -41,15 +41,15 @@ public class DemoATM {
         System.out.println("insertCard -> " + msgInsertAgain);
 
         // Wrong PIN 1
-        Message msgVerifyWrong1 = atm.verify(9999, 1234);
+        Message msgVerifyWrong1 = atm.verify(9999);
         System.out.println("verify (wrong1) -> " + msgVerifyWrong1);
 
         // Wrong PIN 2
-        Message msgVerifyWrong2 = atm.verify(8888, 1234);
+        Message msgVerifyWrong2 = atm.verify(8888);
         System.out.println("verify (wrong2) -> " + msgVerifyWrong2);
 
         // Wrong PIN 3
-        Message msgVerifyWrong3 = atm.verify(7777, 1234);
+        Message msgVerifyWrong3 = atm.verify(7777);
         System.out.println("verify (wrong3) -> " + msgVerifyWrong3);
 
         // 7) Transfer senaryosu (FR17)
@@ -57,12 +57,12 @@ public class DemoATM {
         System.out.println("\n=== DEMO: Transfer Money ===");
         // Yeni kart takalım (ya da aynı kart, ama retained olduysa o kart gitti)
         // Burada farklı bir kart demosu yapabiliriz.
-        Card secondCard = new Card(99999, false, 1001); // Bu da bankCode=1001
+        Card secondCard = new Card(99999, 1231, 1001, false); // Bu da bankCode=1001
         Message msgInsertSecond = atm.insertCard(secondCard);
         System.out.println("insertCard -> " + msgInsertSecond);
 
         // DBProxy’de 9999 accountNum var, PIN=2222
-        Message msgVerifySecond = atm.verify(2222, 9999);
+        Message msgVerifySecond = atm.verify(2222);
         System.out.println("verify -> " + msgVerifySecond);
 
         // Transfer 150 USD -> “to account=1234”

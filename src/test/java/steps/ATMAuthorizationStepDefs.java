@@ -60,7 +60,7 @@ public class ATMAuthorizationStepDefs {
         int cardNumber = Integer.parseInt(cn);
 
         // Suppose we create a Card like: new Card(bankCode, false, cardNumber)
-        Card testCard = new Card(bankCode, false, cardNumber);
+        Card testCard = new Card(cardNumber, 1234, bankCode, false);
 
         // Insert the card
         lastResponse = atm.insertCard(testCard);
@@ -86,6 +86,6 @@ public class ATMAuthorizationStepDefs {
         int accountInt = Integer.parseInt(account);
 
         // e.g., atm.verify(pinInt, accountInt)
-        lastResponse = atm.verify(pinInt, accountInt);
+        lastResponse = atm.verify(pinInt);
     }
 }
