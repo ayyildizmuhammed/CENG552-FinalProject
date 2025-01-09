@@ -49,6 +49,7 @@ public class ScenarioStepDefs {
         userCard = new Card(9999, 1234, 1001, false);
         lastMessage = atm.insertCard(userCard);
         assertEquals("CARD_ACCEPTED", lastMessage.getCode());
+        atm.verify(1111); // Verify the PIN
     }
 
     @Given("the user inserts a valid cash card into the ATM")
@@ -320,7 +321,7 @@ public class ScenarioStepDefs {
         assertEquals("DEPOSIT_SUCCESS", lastMessage.getCode());
     }
 
-    @When("the user retrieves his/her card")
+    @When("the user retrieves card")
     public void theUserRetrievesHisHerCard() {
         // Normally the ATM would eject the card and the user would take it
         lastMessage = new Message("TAKE_CARD", "Card ejected, transaction canceled.");

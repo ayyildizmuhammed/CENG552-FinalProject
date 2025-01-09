@@ -4,7 +4,7 @@ Feature: ATM Functional Requirements (FR1 - FR9)
   I want to verify FR1–FR9 functionalities using the updated bankdata.json
 
   Background:
-    Given the Bank is started with "bankdata.json"
+    Given the Bank is started with "testdata.json"
     And the ATM is started with totalFund "10000", dailyLimit "2000", transactionLimit "500", minCashRequired "500"
 
   @FR2
@@ -75,7 +75,6 @@ Feature: ATM Functional Requirements (FR1 - FR9)
 
   @FR9
   Scenario: [FR9] Withdrawal exceeding daily limit
-    # dailyLimit = 2000, 3000 çekmeyi denediğimizde "EXCEED_DAILY_LIMIT"
     When the user inserts a valid card with bankCode "1001" cardNumber "9999"
     And the user enters PIN "2222" for account "9999"
     And the user requests a withdrawal of "3000"

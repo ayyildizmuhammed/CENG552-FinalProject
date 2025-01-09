@@ -1,0 +1,75 @@
+{
+    "validBankCodes": [
+        1001
+    ],
+    "accounts": [
+        {
+            "accountNumber": 1234,
+            "password": 1111,
+            "status": "active",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "transactionHistory": [
+                "Deposit 1000",
+                "Withdraw 100",
+                "Withdraw 100",
+                "Withdraw 100"
+            ],
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        },
+        {
+            "accountNumber": 9999,
+            "password": 2222,
+            "status": "active",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "transactionHistory": [
+                "Deposit 1000",
+                "Withdraw 100",
+                "Withdraw 100",
+                "Withdraw 100"
+            ],
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        },
+        {
+            "accountNumber": 8888,
+            "password": 3333,
+            "status": "frozen",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "transactionHistory": [
+                "Deposit 1000",
+                "Withdraw 100",
+                "Withdraw 100",
+                "Withdraw 100"
+            ],
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        },
+        {
+            "accountNumber": 4444,
+            "password": 3333,
+            "status": "frozen",
+            "balance": {
+                "availableBalance": 1000,
+                "totalBalance": 1000
+            },
+            "transactionHistory": [
+                "Deposit 1000",
+                "Withdraw 100",
+                "Withdraw 100",
+                "Withdraw 100"
+            ],
+            "dailyUsed": 0,
+            "invalidPasswordCount": 0
+        }
+    ]
+}

@@ -1,7 +1,7 @@
 package atmSrc;
 
 public class Bank {
-    private DatabaseProxy dbProxy;
+    public DatabaseProxy dbProxy;
 
     public Bank(String jsonFilePath) {
         this.dbProxy = new DatabaseProxy(jsonFilePath);

@@ -80,7 +80,6 @@ public class AtmTransactionSteps {
     @And("I enter the correct password {string} for account {string}")
     public void iEnterTheCorrectPasswordForAccount(String pinStr, String accStr) {
         int pin = Integer.parseInt(pinStr);
-        int acc = Integer.parseInt(accStr);
         // ATM kodu 'acc' parametresini session'da tutuyor mu? 
         // Bu projede 'session.setAccountNumber(acc)' falan insertCard sırasında. 
         // Sadece pin'i verify ediyoruz:
@@ -104,6 +103,7 @@ public class AtmTransactionSteps {
      */
     @Then("I should see {string} message as withdrawal result")
     public void iShouldSeeWithdrawalResult(String expectedCode) {
+        System.out.println("Expected code: " + lastMessage.getDescription());
         assertEquals(expectedCode, lastMessage.getCode());
     }
 

@@ -5,8 +5,8 @@ Feature: ATM Transactions for FR10–FR17
 
   Background:
     # Burada ATM ve Bank'ı başlatıyoruz (örnek parametreler):
-    Given the Bank is up with "bankdata.json"
-    And the ATM is up with totalFund "10000", dailyLimit "2000", transactionLimit "500", minCashRequired "500"
+    Given the Bank is up with "testdata.json"
+    And the ATM is up with totalFund "10000", dailyLimit "400", transactionLimit "700", minCashRequired "500"
     # Bu adımlar, FR1–FR2 (ATM init, initial display) vb. testlerden ziyade “ortam hazırlığı” içindir.
 
   # FR10: "If a card was entered more than three times in a row with wrong password => the card is kept by the ATM."
@@ -34,9 +34,9 @@ Feature: ATM Transactions for FR10–FR17
     Examples:
       | pin   | accNum | amount | expectedCode                   | Explanation                                                             |
       | 1111  | 1234   | 300    | TRANSACTION_SUCCESS            | Normal successful withdrawal => FR14 => money dispensed, FR15 => log    |
-      | 1111  | 1234   | 600    | EXCEED_TRANSACTION_LIMIT       | FR12: over per-txn limit (m=500)                                        |
-      | 1111  | 1234   | 300   | EXCEED_DAILY_LIMIT             | FR9 extension, daily limit is 2000 => eğer 2000’ı da aşıyorsa -> fail   |
-      | 1111  | 9998   | 100    | BAD_ACCOUNT                    | FR16: invalid account => transaction fails => error + eject card        |
+      | 1111  | 1234   | 800    | EXCEED_TRANSACTION_LIMIT       | FR12: over per-txn limit (m=500)                                        |
+      | 1111  | 1234   | 600    | EXCEED_DAILY_LIMIT             | FR9 extension, daily limit is 2000 => eğer 2000’ı da aşıyorsa -> fail   |
+      | 1111  | 3366   | 100    | BAD_ACCOUNT                    | FR16: invalid account => transaction fails => error + eject card        |
 
   # FR17: Transfer to another account
   Scenario: [FR17] Transfer money

@@ -4,7 +4,7 @@ Feature: ATM Operation Flow
   I want to follow the required steps at the ATM
 
   Background:
-    Given for scenarios the bank system is running with "bankdata.json"
+    Given for scenarios the bank system is running with "testdata.json"
 
   @Scenario1
   Scenario: A user inserts a card and must proceed within 60 seconds
@@ -16,6 +16,7 @@ Feature: ATM Operation Flow
 
   @Scenario2
   Scenario: Entering password with Correction, Confirm, and Take Card options
+    Given the ATM is powered on
     Given the user has just inserted a valid card
     When the ATM displays a screen to enter the PIN
     And the user enters an incorrect PIN "<pin>" and chooses "CORRECTION"
@@ -73,7 +74,8 @@ Feature: ATM Operation Flow
 
   @Scenario7
   Scenario: Withdrawal flow
-    Given the user is authenticated
+    Given the ATM is powered on
+    And the user has just inserted a valid card
     And the user selects "Withdrawal"
     When the user enters the amount "<withdrawAmount>"
     And the amount exceeds the current balance
@@ -99,6 +101,6 @@ Feature: ATM Operation Flow
   Scenario: Taking the card and ending the transaction
     Given the user is authenticated
     And the user selects "Take the card"
-    When the user retrieves his/her card
+    When the user retrieves card
     Then the transaction should be ended
     And the session should be cleared
