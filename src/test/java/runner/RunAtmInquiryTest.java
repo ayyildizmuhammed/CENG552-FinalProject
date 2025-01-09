@@ -12,5 +12,5 @@ import io.cucumber.junit.CucumberOptions;
         glue = { "steps" }, // Step definitions paketleri
         plugin = { "pretty", "html:target/cucumber-report.html",
                 "json:target/cucumber-report.json" })
-public class RunInquiryTest {
+public class RunAtmInquiryTest {
 }
